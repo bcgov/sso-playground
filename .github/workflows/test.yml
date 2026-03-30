@@ -1,0 +1,12 @@
+name: Run Tests and Lints
+
+on: [push, pull_request]
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: wagoid/commitlint-github-action@v5
