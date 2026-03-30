@@ -1,26 +1,11 @@
 "use client";
 
-import {
-  Box,
-  Button,
-  Grid,
-  Paper,
-  Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tabs,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Grid, Paper } from "@mui/material";
 import { TextField } from "../components/TextField";
 import { useContext, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AlertContext } from "../components/AlertProvider";
 import { env } from "next-runtime-env";
-import XMLViewer from "react-xml-viewer";
 import { AssertionData } from "../components/AssestionData";
 
 interface SAMLFormValues {
@@ -203,7 +188,7 @@ export default function SamlPage() {
         idpCert: samlFormValues.x509Certificate.value,
         logoutUrl: samlFormValues.logoutUrl.value,
         spAcsUrl: `${
-          env("REDIRECT_URI") || "http://localhost:3000"
+          env("NEXT_PUBLIC_REDIRECT_URI") || "http://localhost:3000"
         }/api/auth/callback`,
         userProfile: user,
       }),

@@ -64,7 +64,9 @@ export async function POST(req: Request) {
 
     return Response.redirect(
       new URL(
-        `${env("REDIRECT_URI") || "http://localhost:3000"}/saml?profile=` +
+        `${
+          env("NEXT_PUBLIC_REDIRECT_URI") || "http://localhost:3000"
+        }/saml?profile=` +
           Buffer.from(JSON.stringify(flatten(profile))).toString("base64") +
           `&SAMLResponse=` +
           SAMLResponse

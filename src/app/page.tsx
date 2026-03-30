@@ -3,7 +3,6 @@ import {
   Box,
   Grid,
   Paper,
-  Typography,
   FormControl,
   FormLabel,
   RadioGroup,
@@ -91,7 +90,7 @@ const initialFormValues: FormValues = {
     errorMessage: "",
   },
   redirectUri: {
-    value: env("REDIRECT_URI") || "http://localhost:3000",
+    value: env("NEXT_PUBLIC_REDIRECT_URI") || "http://localhost:3000",
     error: false,
     errorMessage: "",
   },
@@ -173,6 +172,7 @@ export default function Form() {
   }, [authService]);
 
   useEffect(() => {
+    console.log(env("NEXT_PUBLIC_REDIRECT_URI"));
     if (typeof window !== "undefined") {
       if (window.localStorage.getItem("formValues")) {
         setFormValues(

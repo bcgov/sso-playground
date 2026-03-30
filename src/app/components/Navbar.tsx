@@ -57,6 +57,7 @@ function ResponsiveAppBar() {
               width={160}
               height={60}
               style={{ marginRight: "10px" }}
+              loading="eager"
             />
             <Typography
               variant="h5"

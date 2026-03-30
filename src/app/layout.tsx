@@ -8,6 +8,7 @@ import { AppRouterCacheProvider } from "@mui/material-nextjs/v13-appRouter";
 import { AlertProvider } from "./components/AlertProvider";
 import { Suspense } from "react";
 import Skeleton from "react-loading-skeleton";
+import { PublicEnvScript } from "next-runtime-env";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,6 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <PublicEnvScript />
         <script
           dangerouslySetInnerHTML={{
             __html: `

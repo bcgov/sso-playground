@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       callbackUrl: spAcsUrl,
       logoutUrl: logoutUrl,
       logoutCallbackUrl: `${
-        env("REDIRECT_URI") || "http://localhost:3000"
+        env("NEXT_PUBLIC_REDIRECT_URI") || "http://localhost:3000"
       }/saml`,
     };
 

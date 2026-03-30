@@ -19,7 +19,7 @@ route:
   host: sso-playground.apps.gold.devops.gov.bc.ca
 
 env:
-  REDIRECT_URI: https://sso-playground.apps.gold.devops.gov.bc.ca
+  NEXT_PUBLIC_REDIRECT_URI: https://sso-playground.apps.gold.devops.gov.bc.ca
 
 resources:
   limits:
