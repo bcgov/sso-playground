@@ -173,7 +173,6 @@ export default class AuthService {
     sessionStorage.removeItem("code_verifier");
     sessionStorage.removeItem("code_challenge");
     let logoutUrlWithIdToken = `${this.logoutEndpoint}?post_logout_redirect_uri=${this.redirectUri}`;
-    console.log("tokens: ", tokens?.id_token);
 
     if (tokens?.id_token) {
       logoutUrlWithIdToken =
@@ -187,7 +186,6 @@ export default class AuthService {
   async handleCallback() {
     const queryParams = new URLSearchParams(window.location.search);
     const authorizationCode = queryParams.get("code");
-    console.log("authorizationCode: ", authorizationCode);
 
     if (authorizationCode) {
       await this.requestTokens(authorizationCode);

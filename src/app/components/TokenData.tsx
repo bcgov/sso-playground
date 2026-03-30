@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Paper,
   Box,
@@ -36,7 +38,7 @@ const TableData = (props: TableDataProps) => {
   };
 
   return (
-    <Table size="small">
+    <Table size="small" sx={{ wordBreak: "break-all" }}>
       <TableHead>
         <TableRow>
           <TableCell>Claim</TableCell>
@@ -78,7 +80,7 @@ export default function TokenData(props: TokenDataProps) {
     return jwtDecode(token);
   };
   return (
-    <Paper elevation={3} sx={{ borderRadius: 2 }}>
+    <Paper elevation={3} sx={{ padding: 1, margin: 1 }}>
       <Box sx={{ padding: 1 }}>
         <Autocomplete
           disablePortal
@@ -94,13 +96,13 @@ export default function TokenData(props: TokenDataProps) {
               value={tabIndex}
               onChange={(e, newValue) => setTabIndex(newValue)}
             >
-              <Tab label={`Decoded`} />
+              <Tab label="Decoded" />
               <Tab label="Raw" />
             </Tabs>
             {tabIndex === 0 ? (
               <TableData token={tokens[token]} />
             ) : (
-              <Typography variant="body1" sx={{ wordWrap: "break-word" }}>
+              <Typography variant="body1" sx={{ wordBreak: "break-all" }}>
                 {JSON.stringify(tokens[token])}
               </Typography>
             )}

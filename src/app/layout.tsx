@@ -21,6 +21,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+          window.addEventListener('pageshow', function(event) {
+            if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+              window.location.reload();
+            }
+          });
+        `,
+          }}
+        />
+      </head>
       <body className={inter.className}>
         <AppRouterCacheProvider>
           <ThemeProvider theme={theme}>

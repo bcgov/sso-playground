@@ -12,6 +12,8 @@ OIDC and SAML playground is a next.js application built by Pathfinder SSO Team.
 
 ## Usage
 
+### OpenID Connect
+
 - Access the URL(http://localhost:3000 if running locally) in a browser and select a flow type that's relevant to your client.
 - After selecting the flow type, a form is displayed asking for parameters to run the authentication process.
 - The `Discovery URL` is a JSON document that contains important configuration details for the OpenID Connect provider. This document includes information such as:
@@ -23,10 +25,17 @@ OIDC and SAML playground is a next.js application built by Pathfinder SSO Team.
 - After you enter the `Discovery URL`, it should auto populate other URLs if they exist in the JSON document.
 - Enter rest of the fields and click on `Login` button to run the authentication process. If the login was successful, the application should display a panel on the right of the form with a drop-down listing retrieved tokens.
 
+### SAML
+
+- Navigate to `https://dev.loginproxy.gov.bc.ca/auth/realms/standard/protocol/saml/descriptor`
+- Copy `SingleSignOnService`, `SingleLogoutService`, `X509Certificate` for completing the login form
+- Use your client ID as the `Entity ID`
+- Click login button
+
 ## Requirements
 
 - A browser
-- node v20
+- node v22
 - yarn v1.22
 - asdf (optional)
 
@@ -34,7 +43,7 @@ OIDC and SAML playground is a next.js application built by Pathfinder SSO Team.
 
 - Create a `.env` file at the root of the project and add below values
   ```
-  NEXT_PUBLIC_REDIRECT_URI=http://localhost:3000
+  REDIRECT_URI=http://localhost:3000
   ```
 - `yarn` installs all the dependencies
 - `yarn dev` runs the application in development environment
