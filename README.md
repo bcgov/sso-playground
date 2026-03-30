@@ -43,7 +43,7 @@ OIDC and SAML playground is a next.js application built by Pathfinder SSO Team.
 
 - Create a `.env` file at the root of the project and add below values
   ```
-  REDIRECT_URI=http://localhost:3000
+  NEXT_PUBLIC_REDIRECT_URI=http://localhost:3000
   ```
 - `yarn` installs all the dependencies
 - `yarn dev` runs the application in development environment

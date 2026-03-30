@@ -172,7 +172,6 @@ export default function Form() {
   }, [authService]);
 
   useEffect(() => {
-    console.log(env("NEXT_PUBLIC_REDIRECT_URI"));
     if (typeof window !== "undefined") {
       if (window.localStorage.getItem("formValues")) {
         setFormValues(
