@@ -6,6 +6,8 @@ import { ThemeProvider } from "@mui/material/styles";
 import Navbar from "./components/Navbar";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v13-appRouter";
 import { AlertProvider } from "./components/AlertProvider";
+import { Suspense } from "react";
+import Skeleton from "react-loading-skeleton";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -38,7 +40,9 @@ export default function RootLayout({
         <AppRouterCacheProvider>
           <ThemeProvider theme={theme}>
             <Navbar />
-            <AlertProvider>{children}</AlertProvider>
+            <AlertProvider>
+              <Suspense fallback={<Skeleton count={10} />}>{children}</Suspense>
+            </AlertProvider>
           </ThemeProvider>
         </AppRouterCacheProvider>
       </body>

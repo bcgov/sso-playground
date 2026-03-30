@@ -1,8 +1,4 @@
-// api > hello > route.ts
-
-import { NextRequest, NextResponse } from "next/server";
-
-export async function POST(request: NextRequest, response: NextResponse) {
+export async function POST(request: Request) {
   const {
     clientId,
     clientSecret,
@@ -25,7 +21,9 @@ export async function POST(request: NextRequest, response: NextResponse) {
     payload.append("username", username);
     payload.append("password", password);
   } else {
-    return NextResponse.json({ error: "Invalid grant type" }, { status: 401 });
+    return new Response(JSON.stringify({ error: "Invalid grant type" }), {
+      status: 401,
+    });
   }
 
   const tokenResult = await fetch(tokenUrl, {
@@ -38,15 +36,15 @@ export async function POST(request: NextRequest, response: NextResponse) {
 
   if (!tokenResult.ok) {
     const err = await tokenResult.json();
-    return NextResponse.json(
-      {
+    return new Response(
+      JSON.stringify({
         error: err?.error_description || err?.error || err,
-      },
+      }),
       { status: tokenResult.status }
     );
   }
 
   const data = (await tokenResult.json()) as any;
 
-  return NextResponse.json(data);
+  return new Response(JSON.stringify(data), { status: tokenResult.status });
 }
