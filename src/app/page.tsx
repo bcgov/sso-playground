@@ -3,7 +3,6 @@ import {
   Box,
   Grid,
   Paper,
-  Typography,
   FormControl,
   FormLabel,
   RadioGroup,
@@ -14,7 +13,7 @@ import {
 import { MultiSelect } from "./components/MultiSelect";
 import { TextField } from "./components/TextField";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import AuthService from "./services/authorization";
+import AuthService from "./lib/authorization";
 import TokenData from "./components/TokenData";
 import { AlertContext } from "./components/AlertProvider";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -316,14 +315,9 @@ export default function Form() {
 
   return (
     <>
-      <Grid container sx={{ padding: 0.5 }} spacing={1}>
-        <Grid item xs={12}>
-          <Typography variant="h5" sx={{ padding: 1, color: "black" }}>
-            OpenID-Connect
-          </Typography>
-        </Grid>
-        <Grid item xs={12} md={authenticated ? 6 : 12}>
-          <Paper elevation={3}>
+      <Grid container sx={{ padding: 1 }} spacing={1}>
+        <Grid size={authenticated ? 6 : 12}>
+          <Paper elevation={3} sx={{ padding: 1, margin: 1 }}>
             <Box sx={{ padding: 1, height: "100%" }}>
               <form
                 noValidate
@@ -478,7 +472,7 @@ export default function Form() {
                     <MultiSelect
                       onChange={setScopes}
                       label="Scopes"
-                      defaultValue={["openid"]}
+                      value={formValues.scopes.value || ["openid"]}
                       fixedOptions={["openid"]}
                     />
                     {!["service-account", "password"].includes(flowType) && (
@@ -516,7 +510,7 @@ export default function Form() {
           </Paper>
         </Grid>
         {authenticated && (
-          <Grid item xs={12} md={6}>
+          <Grid size={6}>
             <TokenData tokens={tokens} />
           </Grid>
         )}

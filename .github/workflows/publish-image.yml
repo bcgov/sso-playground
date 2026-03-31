@@ -67,3 +67,20 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      - name: Authenticate and set context
+        if: github.ref == 'refs/heads/dev'
+        uses: redhat-actions/oc-login@v1
+        with:
+          openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
+          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
+          namespace: ${{ secrets.OPENSHIFT_NAMESPACE }}
+          insecure_skip_tls_verify: true
+
+      - name: Deploy app with Helm chart
+        if: github.ref == 'refs/heads/dev'
+        run: |
+          namespace=${{ secrets.OPENSHIFT_NAMESPACE }}
+          helm upgrade --install --atomic sso-playground . -n ${namespace} \
+          -f values.yaml --set image.tag="${{ steps.release.outputs.tag_name }}"
+        working-directory: ./helm/app

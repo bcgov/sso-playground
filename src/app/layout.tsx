@@ -6,6 +6,9 @@ import { ThemeProvider } from "@mui/material/styles";
 import Navbar from "./components/Navbar";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v13-appRouter";
 import { AlertProvider } from "./components/AlertProvider";
+import { Suspense } from "react";
+import Skeleton from "react-loading-skeleton";
+import { PublicEnvScript } from "next-runtime-env";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,11 +24,27 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <PublicEnvScript />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+          window.addEventListener('pageshow', function(event) {
+            if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+              window.location.reload();
+            }
+          });
+        `,
+          }}
+        />
+      </head>
       <body className={inter.className}>
         <AppRouterCacheProvider>
           <ThemeProvider theme={theme}>
             <Navbar />
-            <AlertProvider>{children}</AlertProvider>
+            <AlertProvider>
+              <Suspense fallback={<Skeleton count={10} />}>{children}</Suspense>
+            </AlertProvider>
           </ThemeProvider>
         </AppRouterCacheProvider>
       </body>

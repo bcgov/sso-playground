@@ -1,4 +1,5 @@
 "use client";
+
 import * as React from "react";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
@@ -10,118 +11,146 @@ import MenuIcon from "@mui/icons-material/Menu";
 import Container from "@mui/material/Container";
 import Button from "@mui/material/Button";
 import MenuItem from "@mui/material/MenuItem";
-import Link from "next/link";
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
+import theme from "@/theme";
+import { useMediaQuery } from "@mui/material";
+import { useState } from "react";
+
+const menuItems = [
+  { label: "OpenID-Connect", path: "/" },
+  { label: "SAML", path: "/saml" },
+];
 
 function ResponsiveAppBar() {
-  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
-    null
-  );
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorElNav(event.currentTarget);
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
   };
 
-  const handleCloseNavMenu = () => {
-    setAnchorElNav(null);
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
   };
 
-  const navigateTo = (path: string) => {
-    handleCloseNavMenu();
-    window.location.href = path;
+  const handleNavigate = (path: string) => {
+    router.push(path);
+    handleCloseMenu();
   };
 
   return (
-    <AppBar position="static">
-      <Container maxWidth="xl">
-        <Toolbar disableGutters>
-          <Typography
-            variant="h6"
-            noWrap
-            component="a"
-            href="/"
-            sx={{
-              display: { xs: "none", md: "flex" },
-              fontFamily: "monospace",
-              fontWeight: 700,
-              letterSpacing: ".3rem",
-              color: "inherit",
-              textDecoration: "none",
-            }}
-          >
-            SSO Playground
-          </Typography>
-
-          <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
-            <IconButton
-              size="large"
-              aria-label="account of current user"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleOpenNavMenu}
-              color="inherit"
-            >
-              <MenuIcon />
-            </IconButton>
-            <Menu
-              id="menu-appbar"
-              anchorEl={anchorElNav}
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "left",
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "left",
-              }}
-              open={Boolean(anchorElNav)}
-              onClose={handleCloseNavMenu}
+    <>
+      <AppBar
+        position="static"
+        sx={{ backgroundColor: "#003366", borderBottom: "2px solid #fcba19" }}
+      >
+        <Container maxWidth="xl">
+          <Toolbar disableGutters>
+            <Image
+              src="/bc_logo_header.svg"
+              alt="Logo"
+              width={160}
+              height={60}
+              style={{ marginRight: "10px" }}
+              loading="eager"
+            />
+            <Typography
+              variant="h5"
+              noWrap
+              component="a"
+              href="/"
               sx={{
-                display: { xs: "block", md: "none" },
+                fontWeight: 700,
+                letterSpacing: ".3rem",
+                color: "#fff",
+                textDecoration: "none",
+                paddingLeft: "20px",
+                flexGrow: 1,
               }}
             >
-              <MenuItem onClick={handleCloseNavMenu}>
-                <Typography textAlign="center">OIDC</Typography>
-              </MenuItem>
-              <MenuItem onClick={handleCloseNavMenu}>
-                <Typography textAlign="center">SAML</Typography>
-              </MenuItem>
-            </Menu>
-          </Box>
-          <Typography
-            variant="h5"
-            noWrap
-            component="a"
-            href="/"
-            sx={{
-              display: { xs: "flex", md: "none" },
-              flexGrow: 1,
-              fontFamily: "monospace",
-              fontWeight: 700,
-              letterSpacing: ".3rem",
-              color: "inherit",
-              textDecoration: "none",
-            }}
-          >
-            SSO Playground
-          </Typography>
-          <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-            <Button
-              onClick={() => navigateTo("/")}
-              sx={{ my: 2, color: "white", display: "block" }}
-            >
-              OIDC
-            </Button>
-            {/* <Button
-              onClick={() => navigateTo("/saml")}
-              sx={{ my: 2, color: "white", display: "block" }}
-            >
-              SAML
-            </Button> */}
-          </Box>
+              SSO Playground
+            </Typography>
+          </Toolbar>
+        </Container>
+      </AppBar>
+      <Box
+        sx={{
+          flexGrow: 0,
+          backgroundColor: "#38598a",
+          height: "50px",
+          alignItems: "center",
+          paddingLeft: 2,
+        }}
+      >
+        <Toolbar variant="dense">
+          {isMobile ? (
+            <>
+              <IconButton
+                size="large"
+                aria-label="menu"
+                aria-controls="menu-appbar"
+                aria-haspopup="true"
+                onClick={handleOpenMenu}
+                color="inherit"
+              >
+                <MenuIcon />
+              </IconButton>
+              <Menu
+                id="menu-appbar"
+                anchorEl={anchorEl}
+                anchorOrigin={{
+                  vertical: "center",
+                  horizontal: "center",
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: "top",
+                  horizontal: "left",
+                }}
+                open={Boolean(anchorEl)}
+                onClose={handleCloseMenu}
+              >
+                {menuItems.map((item) => (
+                  <MenuItem
+                    key={item.path}
+                    onClick={() => handleNavigate(item.path)}
+                    selected={pathname === item.path}
+                  >
+                    {item.label}
+                  </MenuItem>
+                ))}
+              </Menu>
+            </>
+          ) : (
+            <>
+              {menuItems.map((item) => {
+                const isActive = pathname === item.path;
+
+                return (
+                  <Button
+                    key={item.path}
+                    onClick={() => handleNavigate(item.path)}
+                    sx={{
+                      color: "white",
+                      borderBottom: isActive ? "2px solid #fcba19" : "none",
+                      borderRadius: 0,
+                      textTransform: "none",
+                    }}
+                  >
+                    {item.label}
+                  </Button>
+                );
+              })}
+            </>
+          )}
         </Toolbar>
-      </Container>
-    </AppBar>
+      </Box>
+    </>
   );
 }
 export default ResponsiveAppBar;

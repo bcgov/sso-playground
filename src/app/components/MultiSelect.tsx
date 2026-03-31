@@ -6,17 +6,17 @@ import { useState } from "react";
 interface MultiSelectProps {
   onChange: (values: string[]) => void;
   label: string;
-  defaultValue?: string[];
+  value?: string[];
   fixedOptions?: string[];
 }
 
 export const MultiSelect = (props: MultiSelectProps) => {
-  const { onChange, label, defaultValue = [], fixedOptions = [] } = props;
+  const { onChange, label, value = [], fixedOptions = [] } = props;
   return (
     <Autocomplete
       multiple
       options={[]}
-      defaultValue={defaultValue}
+      value={value}
       freeSolo
       onChange={(_, newValue) => {
         onChange(newValue as string[]);
