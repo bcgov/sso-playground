@@ -47,6 +47,8 @@ export async function POST(req: Request) {
       "base64"
     );
 
+    await clearSamlUserSessionCookie();
+
     const authUrl = await saml.getLogoutUrlAsync(userProfile, relayState, {});
 
     return Response.json({ redirectUrl: authUrl });

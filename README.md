@@ -32,6 +32,12 @@ OIDC and SAML playground is a next.js application built by Pathfinder SSO Team.
 - Use your client ID as the `Entity ID`
 - Click login button
 
+#### Troubleshooting
+
+- You may see `Logout Failed` error when attempting to logout
+- The logout functionality does not work due to limitation of access in updating `Logout Service POST Binding URL` under `Fine Grain SAML Endpoint Configuration` settings of the client
+- Login to keycloak and manually update the setting with value `http://localhost:3000/logout/callback`. **Note: Update the host and port if different**
+
 ## Requirements
 
 - A browser

@@ -66,7 +66,7 @@ export default function SamlPage() {
     const profile = searchParams.get("profile");
     const samlResponse = searchParams.get("SAMLResponse");
     const errParam = searchParams.get("error");
-    if (typeof window !== "undefined" && samlResponse) {
+    if (typeof window !== "undefined" && profile && samlResponse) {
       const raw = samlResponse ?? "";
       const base64 = raw
         .replace(/ /g, "+")
@@ -75,8 +75,7 @@ export default function SamlPage() {
       const padded = base64 + "==".slice(0, (4 - (base64.length % 4)) % 4);
       const decoded = atob(padded);
       setSamlResponse(decoded);
-    }
-    if (profile) {
+
       try {
         setUser(
           JSON.parse(Buffer.from(profile as string, "base64").toString())
@@ -85,6 +84,7 @@ export default function SamlPage() {
         setError("Failed to parse profile");
       }
     }
+
     if (errParam) {
       try {
         const { message } = JSON.parse(
@@ -198,10 +198,11 @@ export default function SamlPage() {
         console.error("Logout error:", err);
       });
 
+    setUser(null);
+
     if (data?.redirectUrl) {
       location.href = data.redirectUrl;
     }
-    setUser(null);
   };
 
   return (
