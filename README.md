@@ -27,16 +27,13 @@ OIDC and SAML playground is a next.js application built by Pathfinder SSO Team.
 
 ### SAML
 
+- Ensure your client has Logout Service URL set with (`https://sso-playground.apps.gold.devops.gov.bc.ca/saml` or `http://localhost:3000/saml`) in CSS for logout to work
 - Navigate to `https://dev.loginproxy.gov.bc.ca/auth/realms/standard/protocol/saml/descriptor`
 - Copy `SingleSignOnService`, `SingleLogoutService`, `X509Certificate` for completing the login form
 - Use your client ID as the `Entity ID`
 - Click login button
-
-#### Troubleshooting
-
-- You may see `Logout Failed` error when attempting to logout
-- The logout functionality does not work due to limitation of access in updating `Logout Service POST Binding URL` under `Fine Grain SAML Endpoint Configuration` settings of the client
-- Login to keycloak and manually update the setting with value `http://localhost:3000/logout/callback`. **Note: Update the host and port if different**
+- Click logout to start fresh
+- The reset button should wipe out recent form data
 
 ## Requirements
 
