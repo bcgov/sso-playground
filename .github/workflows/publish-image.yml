@@ -76,7 +76,7 @@ jobs:
           oc: 4.18.7
 
       - name: Authenticate and set context
-        if: github.ref == 'refs/heads/dev'
+        if: github.ref == 'refs/heads/main'
         uses: redhat-actions/oc-login@v1
         with:
           openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
@@ -85,9 +85,9 @@ jobs:
           insecure_skip_tls_verify: true
 
       - name: Deploy app with Helm chart
-        if: github.ref == 'refs/heads/dev'
+        if: github.ref == 'refs/heads/main'
         run: |
           namespace=${{ secrets.OPENSHIFT_NAMESPACE }}
           helm upgrade --install --atomic sso-playground . -n ${namespace} \
-          -f values.yaml --set image.tag="dev"
+          -f values.yaml --set image.tag="${{ steps.release.outputs.tag_name }}"
         working-directory: ./helm/app
