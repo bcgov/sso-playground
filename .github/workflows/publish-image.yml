@@ -68,6 +68,13 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
+      - name: Install CLI tools from OpenShift Mirror
+        uses: redhat-actions/openshift-tools-installer@v1
+        with:
+          source: mirror
+          kam: latest
+          oc: 4.18.7
+
       - name: Authenticate and set context
         if: github.ref == 'refs/heads/dev'
         uses: redhat-actions/oc-login@v1
