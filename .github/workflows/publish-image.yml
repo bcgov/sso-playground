@@ -89,5 +89,5 @@ jobs:
         run: |
           namespace=${{ secrets.OPENSHIFT_NAMESPACE }}
           helm upgrade --install --atomic sso-playground . -n ${namespace} \
-          -f values.yaml --set image.tag="${{ steps.meta.outputs.tags }}"
+          -f values.yaml --set image.tag="dev"
         working-directory: ./helm/app
