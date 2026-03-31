@@ -48,6 +48,7 @@ export async function POST(req: Request) {
       issuer: relayData.issuer,
       callbackUrl: relayData.callbackUrl,
       logoutUrl: relayData.logoutUrl,
+      wantAssertionsSigned: false,
     };
 
     const saml = new SAML(samlConfig);
