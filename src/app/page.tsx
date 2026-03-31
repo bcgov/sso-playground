@@ -472,7 +472,7 @@ export default function Form() {
                     <MultiSelect
                       onChange={setScopes}
                       label="Scopes"
-                      defaultValue={["openid"]}
+                      value={formValues.scopes.value || ["openid"]}
                       fixedOptions={["openid"]}
                     />
                     {!["service-account", "password"].includes(flowType) && (
