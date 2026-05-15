@@ -134,17 +134,21 @@ export default class AuthService {
     sessionStorage.setItem("oauth_state", state);
     sessionStorage.setItem("oidc_nonce", nonce);
 
-    let authorizationUrl = `${
-      this.authorizationEndpoint
-    }?response_type=code&client_id=${this.clientId}&redirect_uri=${
-      this.redirectUri
-    }&scope=${this.scopes.join(
-      " "
-    )}&state=${this.getRandomString()}&nonce=${nonce}`;
+    const authorizationUrl = new URL(this.authorizationEndpoint);
+    if (!["http:", "https:"].includes(authorizationUrl.protocol)) {
+      throw new Error("Invalid authorization endpoint protocol");
+    }
+
+    authorizationUrl.searchParams.set("response_type", "code");
+    authorizationUrl.searchParams.set("client_id", this.clientId);
+    authorizationUrl.searchParams.set("redirect_uri", this.redirectUri);
+    authorizationUrl.searchParams.set("scope", this.scopes.join(" "));
+    authorizationUrl.searchParams.set("state", state);
+    authorizationUrl.searchParams.set("nonce", nonce);
 
     if (this.clientSecret) {
       sessionStorage.setItem("client_secret", this.clientSecret);
-      authorizationUrl = `${authorizationUrl}&client_secret=${this.clientSecret}`;
+      authorizationUrl.searchParams.set("client_secret", this.clientSecret);
     } else {
       // Create PKCE code verifier
       const code_verifier = this.getRandomString();
@@ -154,14 +158,18 @@ export default class AuthService {
       const arrayHash: any = await this.encryptStringWithSHA256(code_verifier);
       const code_challenge = this.hashToBase64url(arrayHash);
       sessionStorage.setItem("code_challenge", code_challenge);
-      authorizationUrl = `${authorizationUrl}&code_challenge_method=S256&code_challenge=${code_challenge}`;
+      authorizationUrl.searchParams.set("code_challenge_method", "S256");
+      authorizationUrl.searchParams.set("code_challenge", code_challenge);
     }
 
     if (this.forwardQueryParams) {
-      authorizationUrl = `${authorizationUrl}&${this.forwardQueryParams}`;
+      const forwardedParams = new URLSearchParams(this.forwardQueryParams);
+      forwardedParams.forEach((value, key) => {
+        authorizationUrl.searchParams.set(key, value);
+      });
     }
 
-    globalThis.location.href = authorizationUrl;
+    globalThis.location.href = authorizationUrl.toString();
   }
 
   async logout(id_token?: string) {
