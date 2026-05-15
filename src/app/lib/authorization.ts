@@ -177,14 +177,27 @@ export default class AuthService {
     sessionStorage.removeItem("oauth_state");
     sessionStorage.removeItem("code_verifier");
     sessionStorage.removeItem("code_challenge");
-    let logoutUrlWithIdToken = `${this.logoutEndpoint}?post_logout_redirect_uri=${this.redirectUri}`;
 
-    if (id_token) {
-      logoutUrlWithIdToken =
-        logoutUrlWithIdToken + `&id_token_hint=${encodeURIComponent(id_token)}`;
+    const logoutUrl = new URL(this.logoutEndpoint);
+    if (!["https:", "http:"].includes(logoutUrl.protocol)) {
+      throw new Error("Invalid logout endpoint protocol.");
     }
 
-    globalThis.location.href = logoutUrlWithIdToken;
+    const validatedRedirectUri = new URL(this.redirectUri);
+    if (!["https:", "http:"].includes(validatedRedirectUri.protocol)) {
+      throw new Error("Invalid redirect URI protocol.");
+    }
+
+    logoutUrl.searchParams.set(
+      "post_logout_redirect_uri",
+      validatedRedirectUri.toString()
+    );
+
+    if (id_token) {
+      logoutUrl.searchParams.set("id_token_hint", id_token);
+    }
+
+    globalThis.location.href = logoutUrl.toString();
   }
 
   async handleCallback(
