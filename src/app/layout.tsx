@@ -9,6 +9,7 @@ import { AlertProvider } from "./components/AlertProvider";
 import { Suspense } from "react";
 import Skeleton from "react-loading-skeleton";
 import { PublicEnvScript } from "next-runtime-env";
+import "react-loading-skeleton/dist/skeleton.css";
 
 const inter = Inter({ subsets: ["latin"] });
 

@@ -44,7 +44,7 @@ export default class AuthService {
     crypto.getRandomValues(randomItems);
     const binaryStringItems: string[] = [];
     randomItems.forEach((dec) =>
-      binaryStringItems.push(`0${dec.toString(16).substr(-2)}`)
+      binaryStringItems.push(`0${dec.toString(16).slice(-2)}`)
     );
     return binaryStringItems.reduce(
       (acc: string, item: string) => `${acc}${item}`,
@@ -63,7 +63,7 @@ export default class AuthService {
   decodePayload = (payload: string) => {
     if (!payload) return null;
 
-    const cleanedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const cleanedPayload = payload.replaceAll("-", "+").replaceAll("_", "/");
     const decodedPayload = atob(cleanedPayload);
     const uriEncodedPayload = Array.from(decodedPayload).reduce((acc, char) => {
       const uriEncodedChar = ("00" + char.charCodeAt(0).toString(16)).slice(-2);
@@ -91,8 +91,8 @@ export default class AuthService {
     const decodedHash = btoa(stringifiedArrayHash);
 
     return decodedHash
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
+      .replaceAll("+", "-")
+      .replaceAll("/", "_")
       .replace(/=+$/, "");
   };
   async login(flowType: string) {
@@ -134,105 +134,163 @@ export default class AuthService {
     sessionStorage.setItem("oauth_state", state);
     sessionStorage.setItem("oidc_nonce", nonce);
 
-    let authorizationUrl = `${
-      this.authorizationEndpoint
-    }?response_type=code&client_id=${this.clientId}&redirect_uri=${
-      this.redirectUri
-    }&scope=${this.scopes.join(
-      " "
-    )}&state=${this.getRandomString()}&nonce=${nonce}`;
+    const authorizationUrl = new URL(this.authorizationEndpoint);
+    if (!["http:", "https:"].includes(authorizationUrl.protocol)) {
+      throw new Error("Invalid authorization endpoint protocol");
+    }
+
+    authorizationUrl.searchParams.set("response_type", "code");
+    authorizationUrl.searchParams.set("client_id", this.clientId);
+    authorizationUrl.searchParams.set("redirect_uri", this.redirectUri);
+    authorizationUrl.searchParams.set("scope", this.scopes.join(" "));
+    authorizationUrl.searchParams.set("state", state);
+    authorizationUrl.searchParams.set("nonce", nonce);
 
     if (this.clientSecret) {
       sessionStorage.setItem("client_secret", this.clientSecret);
-      authorizationUrl = `${authorizationUrl}&client_secret=${this.clientSecret}`;
+      authorizationUrl.searchParams.set("client_secret", this.clientSecret);
+    } else {
+      // Create PKCE code verifier
+      const code_verifier = this.getRandomString();
+      sessionStorage.setItem("code_verifier", code_verifier);
+
+      // Create code challenge
+      const arrayHash: any = await this.encryptStringWithSHA256(code_verifier);
+      const code_challenge = this.hashToBase64url(arrayHash);
+      sessionStorage.setItem("code_challenge", code_challenge);
+      authorizationUrl.searchParams.set("code_challenge_method", "S256");
+      authorizationUrl.searchParams.set("code_challenge", code_challenge);
     }
-
-    // Create PKCE code verifier
-    const code_verifier = this.getRandomString();
-    sessionStorage.setItem("code_verifier", code_verifier);
-
-    // Create code challenge
-    const arrayHash: any = await this.encryptStringWithSHA256(code_verifier);
-    const code_challenge = this.hashToBase64url(arrayHash);
-    sessionStorage.setItem("code_challenge", code_challenge);
-    authorizationUrl = `${authorizationUrl}&code_challenge_method=S256&code_challenge=${code_challenge}`;
 
     if (this.forwardQueryParams) {
-      authorizationUrl = `${authorizationUrl}&${this.forwardQueryParams}`;
+      const forwardedParams = new URLSearchParams(this.forwardQueryParams);
+      forwardedParams.forEach((value, key) => {
+        authorizationUrl.searchParams.set(key, value);
+      });
     }
 
-    window.location.href = authorizationUrl;
+    globalThis.location.href = authorizationUrl.toString();
   }
 
-  async logout() {
-    const tokens = JSON.parse(sessionStorage.getItem("tokens") || "");
-
-    sessionStorage.removeItem("tokens");
+  async logout(id_token?: string) {
     sessionStorage.removeItem("oidc_nonce");
     sessionStorage.removeItem("oauth_state");
     sessionStorage.removeItem("code_verifier");
     sessionStorage.removeItem("code_challenge");
-    let logoutUrlWithIdToken = `${this.logoutEndpoint}?post_logout_redirect_uri=${this.redirectUri}`;
 
-    if (tokens?.id_token) {
-      logoutUrlWithIdToken =
-        logoutUrlWithIdToken +
-        `&id_token_hint=${encodeURIComponent(tokens.id_token)}`;
+    const logoutUrl = new URL(this.logoutEndpoint);
+    if (!["https:", "http:"].includes(logoutUrl.protocol)) {
+      throw new Error("Invalid logout endpoint protocol.");
     }
 
-    window.location.href = logoutUrlWithIdToken;
-  }
-
-  async handleCallback() {
-    const queryParams = new URLSearchParams(window.location.search);
-    const authorizationCode = queryParams.get("code");
-
-    if (authorizationCode) {
-      await this.requestTokens(authorizationCode);
-      window.history.replaceState({}, document.title, "/");
-    }
-  }
-
-  private async requestTokens(authorizationCode: string) {
-    const tokenRequestBody = new URLSearchParams({
-      grant_type: "authorization_code",
-      code: authorizationCode,
-      redirect_uri: this.redirectUri,
-      client_id: this.clientId,
-    });
-
-    if (this.clientSecret) {
-      tokenRequestBody.append("client_secret", this.clientSecret);
+    const validatedRedirectUri = new URL(this.redirectUri);
+    if (!["https:", "http:"].includes(validatedRedirectUri.protocol)) {
+      throw new Error("Invalid redirect URI protocol.");
     }
 
-    tokenRequestBody.append(
-      "code_verifier",
-      sessionStorage.getItem("code_verifier") || ""
+    logoutUrl.searchParams.set(
+      "post_logout_redirect_uri",
+      validatedRedirectUri.toString()
     );
 
-    const response = await fetch(this.tokenEndpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: tokenRequestBody.toString(),
-    });
-
-    const tokens = await response.json();
-
-    if (this.userinfoEndpoint && tokens?.access_token) {
-      const userinfoResponse = await fetch(this.userinfoEndpoint, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${tokens?.access_token}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      });
-      const userinfo = await userinfoResponse.json();
-      tokens["userinfo_token"] = userinfo;
+    if (id_token) {
+      logoutUrl.searchParams.set("id_token_hint", id_token);
     }
 
-    sessionStorage.setItem("tokens", JSON.stringify(tokens || {}));
+    globalThis.location.href = logoutUrl.toString();
+  }
+
+  async handleCallback(
+    {
+      tokenUrl,
+      clientId,
+      clientSecret,
+      redirectUri,
+      userinfoUrl,
+    }: {
+      tokenUrl: string;
+      clientId: string;
+      clientSecret?: string;
+      redirectUri: string;
+      userinfoUrl?: string;
+    },
+    authorizationCode?: string
+  ) {
+    let tokens = null;
+    if (authorizationCode) {
+      tokens = await this.requestTokens(
+        { tokenUrl, clientId, clientSecret, redirectUri, userinfoUrl },
+        authorizationCode
+      );
+    }
+    return tokens;
+  }
+
+  private async requestTokens(
+    {
+      tokenUrl,
+      clientId,
+      clientSecret,
+      redirectUri,
+      userinfoUrl,
+    }: {
+      tokenUrl: string;
+      clientId: string;
+      clientSecret?: string;
+      redirectUri: string;
+      userinfoUrl?: string;
+    },
+    authorizationCode: string
+  ) {
+    let tokens = null;
+    try {
+      const tokenRequestBody = new URLSearchParams({
+        grant_type: "authorization_code",
+        code: authorizationCode,
+        redirect_uri: redirectUri,
+        client_id: clientId,
+      });
+
+      if (clientSecret) {
+        tokenRequestBody.append("client_secret", clientSecret);
+      } else {
+        tokenRequestBody.append(
+          "code_verifier",
+          sessionStorage.getItem("code_verifier") || ""
+        );
+      }
+
+      const response = await fetch(tokenUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Accept: "application/json",
+        },
+        body: tokenRequestBody.toString(),
+      });
+
+      if (
+        response.ok &&
+        response.headers.get("Content-Type")?.includes("application/json")
+      ) {
+        tokens = await response.json();
+
+        if (userinfoUrl && tokens?.access_token) {
+          const userinfoResponse = await fetch(userinfoUrl, {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${tokens?.access_token}`,
+            },
+          });
+          const userinfo = await userinfoResponse.json();
+          tokens["userinfo_token"] = userinfo;
+        }
+      }
+      return tokens;
+    } catch (err) {
+      console.error("Error requesting tokens:", err);
+      throw err;
+    }
   }
 
   isAuthenticated() {
@@ -240,7 +298,7 @@ export default class AuthService {
     const tokens = sessionStorage.getItem("tokens");
     if (tokens) {
       const tokenPayload = this.parseJWTPayload(
-        JSON.parse(tokens || "{}").access_token
+        JSON.parse(tokens).access_token
       );
       if (tokenPayload) {
         authenticated = true;
