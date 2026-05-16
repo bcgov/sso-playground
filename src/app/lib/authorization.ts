@@ -125,9 +125,8 @@ export default class AuthService {
         const error = await response.json();
         throw new Error(error?.error);
       }
-      const tokens = await response.json();
-      sessionStorage.setItem("tokens", JSON.stringify(tokens || {}));
-      return;
+
+      return await response.json();
     }
     const state = this.getRandomString();
     const nonce = this.getRandomString();
@@ -172,7 +171,9 @@ export default class AuthService {
     globalThis.location.href = authorizationUrl.toString();
   }
 
-  async logout(id_token?: string) {
+  async logout(id_token: string) {
+    if (!id_token) throw new Error("ID token is required for logout.");
+
     sessionStorage.removeItem("oidc_nonce");
     sessionStorage.removeItem("oauth_state");
     sessionStorage.removeItem("code_verifier");
@@ -188,16 +189,7 @@ export default class AuthService {
       throw new Error("Invalid redirect URI protocol.");
     }
 
-    logoutUrl.searchParams.set(
-      "post_logout_redirect_uri",
-      validatedRedirectUri.toString()
-    );
-
-    if (id_token) {
-      logoutUrl.searchParams.set("id_token_hint", id_token);
-    }
-
-    globalThis.location.href = logoutUrl.toString();
+    globalThis.location.href = `${this.logoutEndpoint}?id_token_hint=${id_token}&post_logout_redirect_uri=${this.redirectUri}`;
   }
 
   async handleCallback(

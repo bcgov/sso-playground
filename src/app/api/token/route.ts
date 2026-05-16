@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const data = (await tokenResult.json()) as any;
+  const data = await tokenResult.json();
 
   return new Response(JSON.stringify(data), { status: tokenResult.status });
 }

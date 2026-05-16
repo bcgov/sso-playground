@@ -164,6 +164,8 @@ export default function Form() {
   const handleFlowTypeChange = (e: any) => {
     setFlowType(e.target.value);
     globalThis.localStorage.setItem("flowType", e.target.value);
+    setAuthenticated(false);
+    setTokens({} as Tokens);
   };
 
   const handleAuthCallback = useCallback(async () => {
@@ -228,19 +230,25 @@ export default function Form() {
 
   const handleLogin = async () => {
     try {
-      await authService.login(flowType);
+      const tokens = await authService.login(flowType);
       if (["service-account", "password"].includes(flowType)) {
-        globalThis.location.reload();
+        setTokens(tokens);
+        setAuthenticated(true);
       }
     } catch (err: any) {
       setError(err?.message || err);
-      console.error(error);
+      console.error(err);
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (flowType === "authorization-code") {
-      authService.logout(tokens.id_token);
+      try {
+        await authService.logout(tokens.id_token);
+      } catch (err: any) {
+        setError(err?.message || "Failed to logout");
+        console.error(err);
+      }
     } else {
       setTokens({} as Tokens);
       setAuthenticated(false);
@@ -519,15 +527,41 @@ export default function Form() {
                       value={formValues.redirectUri.value}
                     />
                   )}
-                  {authenticated ? (
-                    <Button variant="contained" onClick={handleLogout}>
-                      Logout
-                    </Button>
-                  ) : (
-                    <Button variant="contained" type="submit">
-                      Login
-                    </Button>
-                  )}
+                  {(() => {
+                    const isServiceOrPasswordFlow = [
+                      "service-account",
+                      "password",
+                    ].includes(flowType);
+                    const buttonLabel = isServiceOrPasswordFlow
+                      ? "Get Token"
+                      : "Login";
+
+                    if (isServiceOrPasswordFlow) {
+                      return (
+                        <Button
+                          variant="contained"
+                          type="submit"
+                          disabled={tokensLoading}
+                        >
+                          {buttonLabel}
+                        </Button>
+                      );
+                    } else {
+                      return authenticated ? (
+                        <Button variant="contained" onClick={handleLogout}>
+                          Logout
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="contained"
+                          type="submit"
+                          disabled={tokensLoading}
+                        >
+                          {buttonLabel}
+                        </Button>
+                      );
+                    }
+                  })()}
                   <Button
                     variant="contained"
                     onClick={() => {
