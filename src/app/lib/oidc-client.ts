@@ -86,6 +86,10 @@ export class OidcAuthService {
 
   async processLoginCallback() {
     try {
+      if (sessionStorage.getItem("tokens")) {
+        return JSON.parse(sessionStorage.getItem("tokens") || "");
+      }
+
       const url = new URL(globalThis.location.href);
       if (
         url.searchParams.get("code") === null ||
@@ -97,6 +101,8 @@ export class OidcAuthService {
       const response = await client.processSigninResponse(
         globalThis.location.href
       );
+      globalThis.history.replaceState({}, document.title, "/");
+      sessionStorage.setItem("tokens", JSON.stringify(response));
       return response;
     } catch (error) {
       console.error("Login callback processing failed:", error);
@@ -110,6 +116,7 @@ export class OidcAuthService {
       const logoutUri = await client.createSignoutRequest({
         id_token_hint: idToken,
       });
+      sessionStorage.removeItem("tokens");
       globalThis.location.href = logoutUri.url;
     } catch (error) {
       console.error("Logout failed:", error);

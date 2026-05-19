@@ -168,15 +168,11 @@ export default function Form() {
     setTokens(undefined);
   };
 
-  const processLogin = async () => {
-    let tokens;
+  const processOAuthLoginCallback = async () => {
     try {
+      let tokens: SigninResponse | undefined;
       if (flowType === "authorization-code") {
         tokens = await oidcAuthService.processLoginCallback();
-      } else if (flowType === "service-account") {
-        tokens = await oidcAuthService.processClientCredentialsGrant();
-      } else if (flowType === "password") {
-        tokens = await oidcAuthService.processPasswordGrant();
       }
       if (tokens) {
         setAuthenticated(true);
@@ -202,9 +198,9 @@ export default function Form() {
 
   useEffect(() => {
     setTokensLoading(true);
-    processLogin();
+    processOAuthLoginCallback();
     setTokensLoading(false);
-  }, [oidcAuthService, flowType]);
+  }, [oidcAuthService]);
 
   useEffect(() => {
     populateUrls(formValues.discoveryUrl.value);
@@ -212,8 +208,17 @@ export default function Form() {
 
   const handleLogin = async () => {
     try {
+      let tokens: SigninResponse | undefined;
       if (flowType === "authorization-code") {
         await oidcAuthService.login();
+      } else if (flowType === "service-account") {
+        tokens = await oidcAuthService.processClientCredentialsGrant();
+      } else if (flowType === "password") {
+        tokens = await oidcAuthService.processPasswordGrant();
+      }
+      if (tokens) {
+        setAuthenticated(true);
+        setTokens(tokens);
       }
     } catch (err: any) {
       setError(err?.message || err);
@@ -225,14 +230,12 @@ export default function Form() {
     if (flowType === "authorization-code") {
       try {
         await oidcAuthService.logout(tokens?.id_token || "");
+        setTokens(undefined);
+        setAuthenticated(false);
       } catch (err: any) {
         setError(err?.message || "Failed to logout");
         console.error(err);
       }
-    } else {
-      setTokens(undefined);
-      setAuthenticated(false);
-      globalThis.location.reload();
     }
   };
 
