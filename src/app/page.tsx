@@ -19,6 +19,8 @@ import { AlertContext } from "./components/AlertProvider";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { env } from "next-runtime-env";
 import Loader from "./components/Loader";
+import { OidcAuthService } from "./lib/oidc-client";
+import { SigninResponse } from "oidc-client-ts";
 
 interface Tokens {
   access_token: string;
@@ -118,11 +120,7 @@ export default function Form() {
   const [tokensLoading, setTokensLoading] = useState(false);
 
   const [authenticated, setAuthenticated] = useState(false);
-  const [tokens, setTokens] = useState<Tokens>({
-    access_token: "",
-    id_token: "",
-    refresh_token: "",
-  });
+  const [tokens, setTokens] = useState<SigninResponse>();
   const [validDiscoveryUrl, setValidDiscoveryUrl] = useState(false);
   let validatedFormFields = ["clientId"];
 
@@ -131,9 +129,10 @@ export default function Form() {
   } else validatedFormFields = ["authorizationUrl", "clientId", "tokenUrl"];
 
   const { error, setError } = useContext<AlertContext>(AlertContext);
-  const authService = useMemo(
+  const oidcAuthService = useMemo(
     () =>
-      new AuthService({
+      new OidcAuthService({
+        discoveryUrl: formValues.discoveryUrl.value,
         authorizationEndpoint: formValues.authorizationUrl.value,
         tokenEndpoint: formValues.tokenUrl.value,
         logoutEndpoint: formValues.logoutUrl.value,
@@ -147,6 +146,7 @@ export default function Form() {
         userinfoEndpoint: formValues.userinfoUrl.value,
       }),
     [
+      formValues.discoveryUrl.value,
       formValues.authorizationUrl.value,
       formValues.tokenUrl.value,
       formValues.logoutUrl.value,
@@ -165,48 +165,28 @@ export default function Form() {
     setFlowType(e.target.value);
     globalThis.localStorage.setItem("flowType", e.target.value);
     setAuthenticated(false);
-    setTokens({} as Tokens);
+    setTokens(undefined);
   };
 
-  const handleAuthCallback = useCallback(async () => {
-    const formValues = JSON.parse(
-      globalThis.localStorage.getItem("formValues") || "{}"
-    );
-    if (!formValues?.tokenUrl?.value) return;
-    setTokensLoading(true);
+  const processLogin = async () => {
+    let tokens;
     try {
-      const urlSearchParams = new URLSearchParams(globalThis.location.search);
-      const code = urlSearchParams.get("code");
-      const state = urlSearchParams.get("state");
-      if (!!code && !!state && !authenticated) {
-        const tokens = await authService.handleCallback(
-          {
-            tokenUrl: formValues.tokenUrl.value,
-            clientId: formValues.clientId.value,
-            clientSecret: formValues.clientSecret.value,
-            redirectUri: formValues.redirectUri.value,
-            userinfoUrl: formValues.userinfoUrl.value,
-          },
-          code
-        );
-        if (tokens) {
-          setAuthenticated(true);
-          setTokens(tokens);
-        }
+      if (flowType === "authorization-code") {
+        tokens = await oidcAuthService.processLoginCallback();
+      } else if (flowType === "service-account") {
+        tokens = await oidcAuthService.processClientCredentialsGrant();
+      } else if (flowType === "password") {
+        tokens = await oidcAuthService.processPasswordGrant();
       }
-      globalThis.history.replaceState(
-        {},
-        document.title,
-        globalThis.location.pathname
-      );
-    } catch (err: any) {
-      setTokensLoading(false);
-      setError(err?.message || "Failed to handle authentication callback");
+      if (tokens) {
+        setAuthenticated(true);
+        setTokens(tokens);
+      }
+    } catch (err) {
+      setError((err as any)?.message || err);
       console.error(err);
-    } finally {
-      setTokensLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     if (globalThis.window !== undefined) {
@@ -221,8 +201,10 @@ export default function Form() {
   }, []);
 
   useEffect(() => {
-    handleAuthCallback();
-  }, [handleAuthCallback]);
+    setTokensLoading(true);
+    processLogin();
+    setTokensLoading(false);
+  }, [oidcAuthService, flowType]);
 
   useEffect(() => {
     populateUrls(formValues.discoveryUrl.value);
@@ -230,10 +212,8 @@ export default function Form() {
 
   const handleLogin = async () => {
     try {
-      const tokens = await authService.login(flowType);
-      if (["service-account", "password"].includes(flowType)) {
-        setTokens(tokens);
-        setAuthenticated(true);
+      if (flowType === "authorization-code") {
+        await oidcAuthService.login();
       }
     } catch (err: any) {
       setError(err?.message || err);
@@ -244,13 +224,13 @@ export default function Form() {
   const handleLogout = async () => {
     if (flowType === "authorization-code") {
       try {
-        await authService.logout(tokens.id_token);
+        await oidcAuthService.logout(tokens?.id_token || "");
       } catch (err: any) {
         setError(err?.message || "Failed to logout");
         console.error(err);
       }
     } else {
-      setTokens({} as Tokens);
+      setTokens(undefined);
       setAuthenticated(false);
       globalThis.location.reload();
     }
